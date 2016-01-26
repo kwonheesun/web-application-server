@@ -63,7 +63,7 @@ public class RequestHandler extends Thread {
 				IOUtils ioUtil = new IOUtils();
 				addUser(ioUtil.readData(inBuf, length));
 
-				url = "/index.html";
+//				url = "/index.html";
 			}
 			
 			showWeb(out, url);
@@ -85,8 +85,13 @@ public class RequestHandler extends Thread {
 		DataOutputStream dos = new DataOutputStream(out);
 		byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
 		
-		response200Header(dos, body.length);
-		responseBody(dos, body);
+//		if(url.equals("/create")){
+			response302Header(dos);
+//		}
+//		else{
+//			response200Header(dos, body.length);
+//			responseBody(dos, body);
+//		}
 	}
 	
 	private String getQueryString(String url){
@@ -114,6 +119,17 @@ public class RequestHandler extends Thread {
 			dos.writeBytes("HTTP/1.1 200 OK \r\n");
 			dos.writeBytes("Content-Type: text/html;charset=utf-8\r\n");
 			dos.writeBytes("Content-Length: " + lengthOfBodyContent + "\r\n");
+			dos.writeBytes("\r\n");
+		} catch (IOException e) {
+			log.error(e.getMessage());
+		}
+	}
+	
+	private void response302Header(DataOutputStream dos) {
+		try {
+			//이동만 알려주는 것이므로 단지 주소만 가지고 body는 없음
+			dos.writeBytes("HTTP/1.1 302 Redirect \r\n");
+			dos.writeBytes("Location: http://localhost:8080/index.html \r\n");
 			dos.writeBytes("\r\n");
 		} catch (IOException e) {
 			log.error(e.getMessage());
