@@ -24,8 +24,10 @@ public class WebServer {
     		log.info("Web Application Server started {} port.", port);
 
             // 클라이언트가 연결될때까지 대기한다.
+    		// 쓰레드를 하나 만들어서 돌림
             Socket connection;
             while ((connection = listenSocket.accept()) != null) {
+            	// RequestHandler가 모든 것을 담당함. 하나의 쓰레드
             	RequestHandler requestHandler = new RequestHandler(connection);
                 requestHandler.start();
             }
