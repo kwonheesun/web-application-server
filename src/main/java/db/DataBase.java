@@ -21,4 +21,9 @@ public class DataBase {
 	public static Collection<User> findAll() {
 		return users.values();
 	}
+	
+	public static boolean userCheck(String userId, String password){
+		User user = findUserById(userId);
+		return user.getPassword().equals(password);
+	}
 }

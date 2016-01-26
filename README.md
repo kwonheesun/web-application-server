@@ -43,6 +43,12 @@
 		url = "/index.html";
 	}
 
+* private String getQueryString(String url){
+		int index = url.indexOf("?");
+		String requestPath = url.substring(0, index);
+		return url.substring(index+1);
+	}
+
 ### 요구사항 3 - post 방식으로 회원가입
 * post 방식과 get 방식의 차이
 * if GET 방식인 경우 -> 요구사항 2 처럼 URL을 걸러내고 계산함

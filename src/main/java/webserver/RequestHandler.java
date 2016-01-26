@@ -24,6 +24,7 @@ public class RequestHandler extends Thread {
 	
 	private Socket connection;
 	
+	private boolean logined = false;
 
 	public RequestHandler(Socket connectionSocket) {
 		this.connection = connectionSocket;
@@ -37,23 +38,22 @@ public class RequestHandler extends Thread {
 			
 			//http header 읽어오기 & 출력하기
 			BufferedReader inBuf = new BufferedReader(new InputStreamReader(in));	
-			
 			String str = inBuf.readLine();
 			
 			
 			//url 받아오기, webapp 디렉토리에 읽어 전달하기
-			String url = takeURL(str, " ");
-			int length = 0;
+			String url = takeString(str, " ", 1);
+			
 			
 			//버퍼에서 값 받아오기
+			int length = 0;
 			while (!"".equals(str)){
 				log.debug("header : {}", str);
 				str = inBuf.readLine();
-				
+
 				if(str.startsWith("Content-Length")){
-					length = Integer.parseInt(takeURL(str, ": "));
+					length = Integer.parseInt(takeString(str, ": ", 1));
 				}
-				
 				if (str == null) {
 					return;
 				}
@@ -62,9 +62,13 @@ public class RequestHandler extends Thread {
 			if(url.equals("/create")){
 				IOUtils ioUtil = new IOUtils();
 				addUser(ioUtil.readData(inBuf, length));
-
-//				url = "/index.html";
 			}
+			
+			System.out.println("\turl = " + url);
+			String userInfo = takeString(url, " ", 0);
+			System.out.println(userInfo);
+//			if(url.startsWith("/login")){
+//			}
 			
 			showWeb(out, url);
 			
@@ -76,28 +80,24 @@ public class RequestHandler extends Thread {
 	
 	
 
-	private String takeURL(String str, String sp){
+	private String takeString(String str, String sp, int i){
 		String[] tokens = str.split(sp);
-		return tokens[1];
+		return tokens[i];
 	}
 	
 	private void showWeb(OutputStream out, String url) throws IOException{
 		DataOutputStream dos = new DataOutputStream(out);
-		byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
 		
-//		if(url.equals("/create")){
+		if(url.equals("/create")){
 			response302Header(dos);
-//		}
-//		else{
-//			response200Header(dos, body.length);
-//			responseBody(dos, body);
-//		}
-	}
-	
-	private String getQueryString(String url){
-		int index = url.indexOf("?");
-		String requestPath = url.substring(0, index);
-		return url.substring(index+1);
+		}
+		else{
+			// file은 현재 존재하는 것(form.html, index.html 등)만 불러올 수 있다.
+			// 따라서 현재 존재하지 않는 파일 /create는 불러올 수 없기 때문에 위에 올려놓을 경우 에러가 발생할 수밖에 없다.
+			byte[] body = Files.readAllBytes(new File("./webapp" + url).toPath());
+			response200Header(dos, body.length);
+			responseBody(dos, body);
+		}
 	}
 	
 	private void addUser(String queryString){
@@ -108,6 +108,11 @@ public class RequestHandler extends Thread {
 		DataBase.addUser(user);
 		
 		log.debug("user : {}", user);
+		logined = true;
+	}
+	
+	private boolean userCheck(String userId, String password){
+		return DataBase.userCheck(userId, password);
 	}
 	
 	
@@ -127,9 +132,9 @@ public class RequestHandler extends Thread {
 	
 	private void response302Header(DataOutputStream dos) {
 		try {
-			//이동만 알려주는 것이므로 단지 주소만 가지고 body는 없음
+			// 이동만 알려주는 것이므로 단지 주소만 가지고 body는 없음
 			dos.writeBytes("HTTP/1.1 302 Redirect \r\n");
-			dos.writeBytes("Location: http://localhost:8080/index.html \r\n");
+			dos.writeBytes("Location: /index.html \r\n");
 			dos.writeBytes("\r\n");
 		} catch (IOException e) {
 			log.error(e.getMessage());
